@@ -5,10 +5,14 @@ import { User, UserDocument } from './user.schema';
 import * as bcrypt from 'bcrypt';
 import { Types } from 'mongoose';
 import { Response } from 'express';
+import { SalaryNotification, SalaryNotificationDocument } from '../salary/salary.schema'
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
+    constructor(
+        @InjectModel(User.name) private userModel: Model<UserDocument>,
+        @InjectModel(SalaryNotification.name) private salaryNotificationModel: Model<SalaryNotificationDocument>
+) { }
 
     private readonly saltRounds = 10;
 
@@ -42,7 +46,7 @@ export class UserService {
         const filter = keyword
             ? {
                 $or: [
-                    { firstName: { $regex: keyword, $options: 'i' } },//(case-insensitive)
+                    { firstName: { $regex: keyword, $options: 'i' } },
                     { email: { $regex: keyword, $options: 'i' } },
                     { id: { $regex: keyword, $options: 'i' } },
                     { lastName: { $regex: keyword, $options: 'i' } },
@@ -69,7 +73,40 @@ export class UserService {
 
         return res.json({ User, extraInfo });
     }
+    // async deleteUserById(id: string): Promise<{ deletedCount: number }> {
+    //     const result = await this.userModel.deleteOne({ id }).exec();
+    //     return { deletedCount: result.deletedCount };
+    //   }
 
+    async deleteUserById(id: string): Promise<{ deletedCount: number }> {
+        // Convert the string id to ObjectId
+        const objectId = new Types.ObjectId(id);
+
+        // Delete the user by ObjectId
+        const result = await this.userModel.deleteOne({ _id: objectId }).exec();
+
+        // Check if the user was deleted
+        if (result.deletedCount > 0) {
+            // Delete associated salary notifications for the deleted user
+            await this.salaryNotificationModel.deleteMany({ showTo: objectId }).exec();
+        }
+
+        return { deletedCount: result.deletedCount };
+    }
+    
+    // async deleteUserById(id: string): Promise<{ deletedCount: number }> {
+    //     // Delete the user
+    //     const result = await this.userModel.deleteOne({ id }).exec();
+      
+    //     // Check if the user was deleted
+    //     if (result.deletedCount > 0) {
+    //       // Delete associated salary records
+    //       await this.salaryNotificationModel.deleteMany({ showTo: id }).exec();
+    //     }
+      
+    //     return { deletedCount: result.deletedCount };
+    //   }
+    
     async getAllManager(role: string): Promise<object> {
         const Manager = await this.userModel.find({ role }).select('-password -salary')
         return { manager: Manager }
@@ -100,16 +137,14 @@ export class UserService {
         const realLimit = parseInt(limit);
         const skip = (realPage - 1) * realLimit;
 
-        console.log('filter body start: ');
-        console.log(FilterBody, keyword);
-        console.log('filter body end: ');
+       
 
         
         const filter: Record<string, any> = {};
 
         Object.keys(FilterBody).forEach(key => {
             if (FilterBody[key]) {
-                filter[key] = { $regex: FilterBody[key], $options: 'i' }; // case-insensitive search
+                filter[key] = { $regex: FilterBody[key], $options: 'i' }; 
             }
         });
 
@@ -118,7 +153,7 @@ export class UserService {
         if (keyword !== 'null') {
             total = await this.userModel.countDocuments({
                 ...filter, $or: [
-                    { firstName: { $regex: keyword, $options: 'i' } },//(case-insensitive)
+                    { firstName: { $regex: keyword, $options: 'i' } },
                     { email: { $regex: keyword, $options: 'i' } },
                     { id: { $regex: keyword, $options: 'i' } },
                     { lastName: { $regex: keyword, $options: 'i' } },
@@ -130,7 +165,7 @@ export class UserService {
             User = await this.userModel
                 .find({
                     ...filter, $or: [
-                        { firstName: { $regex: keyword, $options: 'i' } },//(case-insensitive)
+                        { firstName: { $regex: keyword, $options: 'i' } },
                         { email: { $regex: keyword, $options: 'i' } },
                         { id: { $regex: keyword, $options: 'i' } },
                         { lastName: { $regex: keyword, $options: 'i' } },

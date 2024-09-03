@@ -46,6 +46,8 @@ export class User {
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true  })
   reporting_manager?: Types.ObjectId | '';
+  // @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  // reporting_manager?: Types.ObjectId | User;
 
   @Prop({ required: true })
   password: string;

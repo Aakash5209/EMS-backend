@@ -36,6 +36,41 @@ export class UserService {
 
         return res.json({ User, extraInfo });
     }
+    // async getAllUser(page: string, limit: string, res: Response): Promise<object> {
+    //     const realPage = parseInt(page);
+    //     const realLimit = parseInt(limit);
+    //     const skip = (realPage - 1) * realLimit;
+      
+    //     const total = await this.userModel.countDocuments().exec();
+      
+    //     const users = await this.userModel
+    //       .find()
+    //       .select('-password')
+    //       .skip(skip)
+    //       .limit(realLimit)
+    //       .populate({
+    //         path: 'reporting_manager',
+    //         select: 'firstName lastName', // Select only the first name and last name of the reporting manager
+    //       })
+    //       .exec();
+      
+    //     // Add reporting manager's full name to each user object
+    //     const usersWithManagerName = users.map(user => ({
+    //       ...user.toObject(),
+    //       reportingManagerName: user.reporting_manager 
+    //         ? `${user.reporting_manager.firstName} ${user.reporting_manager.lastName}`
+    //         : null,
+    //     }));
+      
+    //     const extraInfo = {
+    //       totalDocs: total,
+    //       pageNo: realPage,
+    //       totalPage: Math.ceil(total / realLimit),
+    //     };
+      
+    //     return res.json({ users: usersWithManagerName, extraInfo });
+    //   }
+      
 
     async getAllUserBySearch(page: string, limit: string, res: Response, keyword: string): Promise<object> {
         const realPage = parseInt(page);
@@ -113,7 +148,7 @@ export class UserService {
     }
 
     async addUser(userData: User) {
-        console.log(userData);
+    
         userData.password = await this.hashPassword(userData.password);
         userData.email = userData.email.toLowerCase();
         if (userData.reporting_manager !== '') {
@@ -121,7 +156,7 @@ export class UserService {
         } else {
             userData.reporting_manager = ''
         }
-        console.log(userData);
+       
         const user = await this.userModel.create(userData)
         if (!user) {
             return { msg: 'user creation failed' }

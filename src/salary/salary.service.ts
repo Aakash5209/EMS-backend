@@ -61,11 +61,10 @@ export class SalaryService {
 
     async updateSalary(res: Response, req: Request, BodyData: object): Promise<object> {
         const user: UserDTOByMiddleware = req["user"]
-        console.log(BodyData);
-        console.log(user);
+        
         const currentUser = await this.userModel.findById(user._id).select('-password')
         const promotedUser = await this.userModel.find({ id: BodyData['id'], salary: parseInt(BodyData['currentSalary']) }).select('-password')
-        console.log(promotedUser);
+       
         if (user.role === 'Admin') {
             const updateSalary = await this.userModel.findByIdAndUpdate(
                 promotedUser[0]['_id'],
@@ -165,26 +164,19 @@ export class SalaryService {
 
     async getSalaryNotification(res: Response, req: Request): Promise<object> {
         const user = req['user']
-        console.log(user);
+       
         return res.json({ data: await this.salaryNotification.find({ showTo: new Types.ObjectId(user['_id']) }) })
     }
 
     async rejectSalary(res: Response, req: Request, BodyData: object): Promise<object> {
         const user = req['user']
-        console.log(user);
+      
         const deletenoti = await this.salaryNotification.deleteOne({
             showTo: new Types.ObjectId(user['_id']),
             currentSalary: BodyData['currentSalary'],
             updatedSalary: BodyData['updatedSalary'],
             id: BodyData['id']
         })
-
-        console.log({
-            showTo: new Types.ObjectId(user['_id']),
-            currentSalary: BodyData['currentSalary'],
-            updatedSalary: BodyData['updatedSalary'],
-            id: BodyData['id']
-        });
 
         if (!deletenoti) {
             throw new Error('deltion failed')

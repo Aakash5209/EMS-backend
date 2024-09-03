@@ -71,7 +71,7 @@ export class AuthService {
   
       return res.json(response);
     } catch (error) {
-      console.error('Error fetching user:', error);
+     
       return res.status(500).json({ message: 'Internal server error' });
     }
   }
@@ -87,7 +87,6 @@ export class AuthService {
    
     const email = userData['email'].toLowerCase();
     const user = await this.userModel.findOne({email: email})
-    console.log("email",user)
 
     if (!user) {
       throw new UnauthorizedException('Credentials are incorrect');
